@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invisible Bleed Diagnosis | Conversion Architecture</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #f7f6f2;
+            --grid-color: #e8e6df;
+            --text-main: #1a1a1a;
+            --text-muted: #666666;
+            
+            --red-border: #e25b50;
+            --red-bg: #fdf2f1;
+            
+            --blue-main: #3972eb;
+            --blue-light: #5285f2;
+            
+            --green-border: #2f9e44;
+            --green-bg: #f1f9f3;
+            
+            --yellow-main: #f5b041;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            background-image: 
+                linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 40px 40px;
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 40px 20px;
+            overflow-x: hidden;
+        }
+
+        /* Top Headers */
+        .headers {
+            display: flex;
+            justify-content: space-between;
+            max-width: 1300px;
+            margin: 0 auto 30px auto;
+            width: 100%;
+            padding: 0 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .header-title {
+            font-size: 1.25rem;
+            font-weight: 500;
+            color: var(--text-main);
+        }
+
+        /* Main Diagram Container */
+        .diagram-container {
+            position: relative;
+            max-width: 1300px;
+            margin: 0 auto;
+            width: 100%;
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+        }
+
+        .svg-lines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .line {
+            fill: none;
+            stroke-width: 2;
+            stroke-dasharray: 6 4;
+        }
+
+        .line.red-line { stroke: var(--red-border); }
+        .line.green-line { stroke: var(--green-border); }
+
+        /* Columns Setup */
+        .columns {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+            gap: 20px;
+        }
+
+        .column {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            flex: 1;
+        }
+
+        .col-left { align-items: flex-end; }
+        .col-center { flex: 0.8; align-items: center; }
+        .col-right { align-items: flex-start; }
+
+        /* Nodes */
+        .node {
+            position: relative;
+            padding: 18px 24px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            line-height: 1.4;
+            max-width: 380px;
+            background: #fff;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: default;
+        }
+
+        .node:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+        }
+
+        .node-left {
+            border: 2px solid var(--red-border);
+            background-color: var(--red-bg);
+        }
+
+        .node-right {
+            border: 2px solid var(--green-border);
+            background-color: var(--green-bg);
+        }
+
+        .node-center {
+            background: var(--blue-main);
+            color: #fff;
+            padding: 25px 40px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(57, 114, 235, 0.3);
+            max-width: 400px;
+        }
+
+        .node-center h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .node-center p {
+            font-size: 0.95rem;
+            font-weight: 400;
+            opacity: 0.9;
+        }
+
+        /* Tags / Pills */
+        .tag {
+            position: absolute;
+            bottom: -12px;
+            right: 20px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #fff;
+            letter-spacing: 0.5px;
+            text-transform: lowercase;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .tag.red-tag { background: var(--red-border); }
+        .tag.green-tag { background: var(--green-border); right: auto; left: 20px; }
+
+        /* Highlight Box (Yellow) */
+        .highlight-box {
+            background: var(--yellow-main);
+            color: #000;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 15px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            box-shadow: 0 4px 15px rgba(245, 176, 65, 0.4);
+            position: relative;
+        }
+        
+        .highlight-box::before {
+            content: '🛡️';
+            position: absolute;
+            left: -15px;
+            top: 15px;
+            font-size: 1.2rem;
+            background: var(--yellow-main);
+            border-radius: 50%;
+            width: 30px; height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .highlight-text { font-style: italic; font-weight: 700; margin-top: 5px; display: block; }
+
+        /* Arrows inside text */
+        .arrow { color: var(--red-border); font-weight: bold; margin-right: 8px; }
+        .node-right .arrow { color: var(--green-border); }
+
+        /* Footer */
+        .footer {
+            max-width: 1300px;
+            margin: 60px auto 0 auto;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-top: 1px solid rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 10;
+        }
+
+        .footer-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .footer-brand {
+            color: #b33939;
+            font-weight: 800;
+            font-size: 1.1rem;
+            letter-spacing: 0.5px;
+        }
+
+        .footer-desc {
+            font-size: 0.95rem;
+            color: var(--text-main);
+        }
+
+        .footer-right {
+            text-align: right;
+            font-size: 0.95rem;
+            color: var(--text-main);
+        }
+
+        .footer-right strong { font-weight: 700; }
+        .footer-right span { color: var(--text-muted); }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .columns { flex-direction: column; gap: 60px; }
+            .col-left, .col-right { align-items: center; }
+            .node { max-width: 100%; width: 100%; }
+            .tag { right: 20px; left: auto; }
+            .headers { display: none; }
+            .svg-lines { display: none; } /* Hide lines on mobile to prevent mess */
+            .footer { flex-direction: column; text-align: center; gap: 20px; }
+            .footer-left { flex-direction: column; gap: 5px; }
+            .highlight-box::before { left: 10px; top: -15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="headers">
+        <div class="header-title">Website communicates</div>
+        <div class="header-title" style="text-align: right;">Reality (The Fix)</div>
+    </div>
+
+    <div class="diagram-container" id="diagram">
+        <svg class="svg-lines" id="lines"></svg>
+        
+        <div class="columns">
+            
+            <!-- LEFT COLUMN: THE BLEED -->
+            <div class="column col-left">
+                <div class="node node-left gs-reveal">
+                    <span class="arrow">→</span> Full Service Commercial Real Estate in Tampa Bay
+                    <div class="tag red-tag">generic</div>
+                </div>
+
+                <div class="node node-left gs-reveal">
+                    <span class="arrow">→</span> Simplifies complexities for a seamless and rewarding experience
+                    <div class="tag red-tag">commodity feelings</div>
+                </div>
+
+                <div class="node node-left gs-reveal">
+                    <span class="arrow">→</span> Committed to integrity, quality, and service
+                    <div class="tag red-tag">every firm says this</div>
+                </div>
+
+                <div class="node node-left gs-reveal">
+                    <span class="arrow">→</span> Boots on ground & multiple databases
+                    <div class="tag red-tag">process focused</div>
+                </div>
+            </div>
+
+            <!-- CENTER COLUMN: THE CORE -->
+            <div class="column col-center">
+                <div class="node-center gs-reveal" id="center-node">
+                    <h1>COMMERCIAL PARTNERS</h1>
+                    <p>Real Estate Strategy | $882M Closed Deals</p>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: THE FIX -->
+            <div class="column col-right">
+                <div class="node node-right gs-reveal">
+                    <span class="arrow">→</span> Commercial Real Estate Strategy That Wins Deals. Not Just Closes Them.
+                    <div class="tag green-tag">Authority Signal</div>
+                </div>
+
+                <div class="node node-right gs-reveal" style="background: var(--blue-main); color: white; border: none;">
+                    <span class="arrow" style="color: white;">→</span> Time protected = Money multiplied = Peace earned.
+                </div>
+
+                <div class="node node-right gs-reveal" style="border-color: transparent; background: transparent; padding: 0; box-shadow: none;">
+                    <div class="node node-right" style="margin-bottom: 0;">
+                        <span class="arrow">→</span> $882M in closed transactions
+                    </div>
+                    <div class="highlight-box">
+                        <strong>Weaponized Proof.</strong>
+                        This isn't theory. This is evidence of specific problem-solving.
+                        <span class="highlight-text">Not just a resume.</span>
+                    </div>
+                </div>
+
+                <div class="node node-right gs-reveal">
+                    <span class="arrow">→</span> Closed $2.8M property in 47 days. Saved client 6 months of carrying costs.
+                    <div class="tag green-tag">Specific Outcomes</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="footer">
+        <div class="footer-left">
+            <div class="footer-brand">INVISIBLE BLEED</div>
+            <div class="footer-desc">Describing HOW you work instead of WHO you solve for.</div>
+        </div>
+        <div class="footer-right">
+            <strong>Diagnosis</strong> — Dr Muhammad Arqam Sultan<br>
+            <span>Conversion Diagnostician</span>
+        </div>
+    </div>
+
+    <script>
+        // Function to draw SVG lines connecting nodes
+        function drawLines() {
+            if (window.innerWidth <= 1024) return; // Don't draw on mobile stack
+
+            const svg = document.getElementById('lines');
+            svg.innerHTML = ''; // Clear existing lines
+            const centerNode = document.getElementById('center-node');
+            const container = document.getElementById('diagram');
+            
+            if (!centerNode || !container) return;
+
+            const cRect = centerNode.getBoundingClientRect();
+            const contRect = container.getBoundingClientRect();
+
+            // Center node attachment points
+            const cLeft = cRect.left - contRect.left;
+            const cRight = cRect.right - contRect.left;
+            const cMidY = cRect.top - contRect.top + (cRect.height / 2);
+
+            // Draw lines for Left Nodes (Red)
+            document.querySelectorAll('.node-left').forEach(node => {
+                const nRect = node.getBoundingClientRect();
+                const nRight = nRect.right - contRect.left;
+                const nMidY = nRect.top - contRect.top + (nRect.height / 2);
+
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                // Cubic Bezier curve for smooth connection
+                const d = `M ${nRight} ${nMidY} C ${nRight + 40} ${nMidY}, ${cLeft - 40} ${cMidY}, ${cLeft} ${cMidY}`;
+                path.setAttribute('d', d);
+                path.setAttribute('class', 'line red-line');
+                
+                // Add dot at the start
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', nRight);
+                circle.setAttribute('cy', nMidY);
+                circle.setAttribute('r', '4');
+                circle.setAttribute('fill', '#e25b50');
+
+                svg.appendChild(path);
+                svg.appendChild(circle);
+            });
+
+            // Draw lines for Right Nodes (Green)
+            document.querySelectorAll('.col-right > .node, .col-right > .gs-reveal > .node-right').forEach(node => {
+                // Ensure we get the actual bounding box of the visual node, not the transparent wrapper
+                const targetNode = node.classList.contains('gs-reveal') && node.style.background === 'transparent' 
+                                   ? node.querySelector('.node-right') : node;
+                
+                const nRect = targetNode.getBoundingClientRect();
+                const nLeft = nRect.left - contRect.left;
+                const nMidY = nRect.top - contRect.top + (nRect.height / 2);
+
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                const d = `M ${cRight} ${cMidY} C ${cRight + 40} ${cMidY}, ${nLeft - 40} ${nMidY}, ${nLeft} ${nMidY}`;
+                path.setAttribute('d', d);
+                path.setAttribute('class', 'line green-line');
+
+                // Add dot at the end
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', nLeft);
+                circle.setAttribute('cy', nMidY);
+                circle.setAttribute('r', '4');
+                circle.setAttribute('fill', '#2f9e44');
+
+                svg.appendChild(path);
+                svg.appendChild(circle);
+            });
+        }
+
+        // Initialize animations and drawing
+        window.addEventListener('load', () => {
+            // GSAP Entrance Animation
+            gsap.from(".gs-reveal", {
+                y: 30,
+                opacity: 0,
+                duration: 0.8,
+                stagger: 0.1,
+                ease: "power3.out",
+                onUpdate: drawLines // Redraw lines during animation to keep them attached
+            });
+
+            // Initial draw
+            setTimeout(drawLines, 100);
+        });
+
+        // Redraw on window resize
+        window.addEventListener('resize', () => {
+            requestAnimationFrame(drawLines);
+        });
+
+        // Hover effect to animate lines
+        document.querySelectorAll('.node-left').forEach(node => {
+            node.addEventListener('mouseenter', () => {
+                gsap.to('.red-line', {strokeDashoffset: -20, duration: 0.5, ease: "none"});
+            });
+        });
+        document.querySelectorAll('.col-right .node').forEach(node => {
+            node.addEventListener('mouseenter', () => {
+                gsap.to('.green-line', {strokeDashoffset: 20, duration: 0.5, ease: "none"});
+            });
+        });
+
+    </script>
+</body>
+</html>
