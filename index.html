@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Vincere Thumbnail</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #111;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .canvas {
+      width: 900px;
+      height: 900px;
+      background: #0d0d0d;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Vignette */
+    .canvas::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, transparent 35%, rgba(0,0,0,0.6) 100%);
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    /* Corner ornaments */
+    .corner {
+      position: absolute;
+      width: 30px;
+      height: 30px;
+      z-index: 10;
+    }
+    .tl { top: 16px; left: 16px; border-top: 2px solid rgba(192,57,43,0.6); border-left: 2px solid rgba(192,57,43,0.6); }
+    .tr { top: 16px; right: 16px; border-top: 2px solid rgba(192,57,43,0.6); border-right: 2px solid rgba(192,57,43,0.6); }
+    .bl { bottom: 16px; left: 16px; border-bottom: 2px solid rgba(192,57,43,0.6); border-left: 2px solid rgba(192,57,43,0.6); }
+    .br { bottom: 16px; right: 16px; border-bottom: 2px solid rgba(192,57,43,0.6); border-right: 2px solid rgba(192,57,43,0.6); }
+
+    /* Top label */
+    .top-label {
+      position: absolute;
+      top: 22px;
+      left: 0; right: 0;
+      text-align: center;
+      font-family: Georgia, serif;
+      font-size: 10px;
+      letter-spacing: 0.28em;
+      color: rgba(255,255,255,0.3);
+      text-transform: uppercase;
+      z-index: 10;
+    }
+
+    /* Collage — top section, fixed height */
+    .collage {
+      position: absolute;
+      top: 46px;
+      left: 50px;
+      right: 50px;
+      height: 530px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 5px;
+      z-index: 3;
+    }
+
+    .collage img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: brightness(0.78) contrast(1.1) saturate(0.85);
+      display: block;
+    }
+
+    .collage img:nth-child(1) { border-radius: 3px 0 0 0; }
+    .collage img:nth-child(2) { border-radius: 0 3px 0 0; }
+    .collage img:nth-child(3) { border-radius: 0 0 0 3px; }
+    .collage img:nth-child(4) { border-radius: 0 0 3px 0; }
+
+    /* Bottom text block — positioned below collage */
+    .text-block {
+      position: absolute;
+      top: 596px;
+      left: 0; right: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .divider {
+      width: 50px;
+      height: 3px;
+      background: #c0392b;
+      margin-bottom: 14px;
+    }
+
+    .title {
+      font-family: Georgia, serif;
+      font-size: 64px;
+      font-weight: bold;
+      letter-spacing: 0.2em;
+      color: #ffffff;
+      text-transform: uppercase;
+      line-height: 1;
+      margin-bottom: 12px;
+    }
+
+    .subtitle {
+      font-family: Georgia, serif;
+      font-size: 12px;
+      letter-spacing: 0.24em;
+      color: rgba(255,255,255,0.4);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .tagline {
+      font-family: Georgia, serif;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      color: #c0392b;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <div class="canvas">
+
+    <div class="corner tl"></div>
+    <div class="corner tr"></div>
+    <div class="corner bl"></div>
+    <div class="corner br"></div>
+
+    <p class="top-label">Vincere Publishing</p>
+
+    <div class="collage">
+      <img src="1.jpeg" alt="" />
+      <img src="2.jpeg" alt="" />
+      <img src="3.jpeg" alt="" />
+      <img src="4.jpeg" alt="" />
+    </div>
+
+    <div class="text-block">
+      <div class="divider"></div>
+      <h1 class="title">Vincere</h1>
+      <p class="subtitle">10 Laws of Power &amp; Strategy</p>
+      <p class="tagline">History's greatest conquerors. Your daily playbook.</p>
+    </div>
+
+  </div>
+</body>
+</html>
